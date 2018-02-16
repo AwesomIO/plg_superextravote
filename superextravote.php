@@ -10,6 +10,7 @@
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Plugin\CMSPlugin;
+use Joomla\CMS\Plugin\PluginHelper;
 
 defined('_JEXEC') or die;
 
@@ -144,7 +145,17 @@ class plgContentSuperExtraVote extends CMSPlugin
         // Load plugin language files only when needed (ex: they are not needed if show_vote is not active).
         $this->loadLanguage();
 
-        $html = '*-*-*-*-*';
+        // Render the layout
+        ob_start();
+        $html = ob_get_clean();
+
+        // Get the path for the voting form layout file
+        $path = PluginHelper::getLayoutPath('content', 'superextravote', 'vote');
+
+        // Render the layout
+        ob_start();
+        include $path;
+        $html .= ob_get_clean();
 
         return $html;
     }
