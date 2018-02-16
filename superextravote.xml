@@ -16,12 +16,27 @@
 	<description>PLG_CONTENT_SUPEREXTRAVOTE_XML_DESCRIPTION</description>
 
 	<!-- Scripts to run on installation -->
-	<scriptfile></scriptfile>
+	<scriptfile>script.php</scriptfile>
+
+	<install>
+		<sql>
+			<file driver="mysql" charset="utf8">sql/install.sql</file>
+		</sql>
+	</install>
+
+	<uninstall>
+		<sql>
+			<file driver="mysql" charset="utf8">sql/uninstall.sql</file>
+		</sql>
+	</uninstall>
+
+	<update></update>
 
 	<!-- Plugin files -->
 	<files>
 		<filename plugin="superextravote">superextravote.php</filename>
 		<folder>language</folder>
+		<folder>sql</folder>
 	</files>
 
 	<!-- Config parameter -->
