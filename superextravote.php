@@ -46,6 +46,20 @@ class plgContentSuperExtraVote extends CMSPlugin
      */
     protected $votingPosition;
 
+    /**
+     * @var    int
+     * @since    3.8.0
+     */
+    protected $article_id;
+
+    /**
+     * @var    \JHtmlUser
+     * @since    3.8.0
+     */
+    protected $user;
+
+
+
     public function __construct(&$subject, $config)
     {
         parent::__construct($subject, $config);
@@ -53,6 +67,7 @@ class plgContentSuperExtraVote extends CMSPlugin
         $this->votingPosition = $this->params->get('position', 'top');
         $this->app = Factory::getApplication();
         $this->db = Factory::getDbo();
+        $this->user = Factory::getUser();
     }
 
     /**
@@ -127,10 +142,11 @@ class plgContentSuperExtraVote extends CMSPlugin
      */
     private function displayVotingData($context, &$row, &$params, $page)
     {
+        $this->article_id = intval($row->id);
+
         $parts = explode('.', $context);
 
-        //var_dump($row->catid);
-        //var_dump($row->id);
+        $rating_count=$rating_sum=0;
 
         if ($parts[0] !== 'com_content')
         {
@@ -140,6 +156,35 @@ class plgContentSuperExtraVote extends CMSPlugin
         if (empty($params) || !$params->get('show_vote', null))
         {
             return '';
+        }
+
+        $query=$this->db->getQuery(true);
+
+        $query->select(
+            $this->db->quoteName(array('rating_sum', 'rating_count', 'content_id'))
+        )
+            ->from($this->db->quoteName('#__content_rating'))
+            ->where($this->db->quoteName('content_id') .' = '. $this->db->quote($this->article_id));
+
+        $this->db->setQuery($query);
+        $vote=$this->db->loadObject();
+        $vote->user_id = $this->user->id;
+
+        $query->clear();
+
+        if($vote) {
+            $rating_sum = intval($vote->rating_sum);
+            $rating_count = intval($vote->rating_count);
+            $user_voted = false;
+
+            if($vote->user_id){
+                $query->select('COUNT(*)')
+                    ->from($this->db->quoteName('#__content_superextravote'))
+                    ->where(
+                        $this->db->quoteName('user_id') .'='. $vote->user_id .' AND '.
+                        $this->db->quoteName('content_id') .'='. $vote->content_id
+                    );
+            }
         }
 
         // Load plugin language files only when needed (ex: they are not needed if show_vote is not active).
