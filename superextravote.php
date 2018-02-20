@@ -11,6 +11,7 @@
 use Joomla\CMS\Factory;
 use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\CMS\Plugin\PluginHelper;
+use Joomla\Registry\Registry;
 
 defined('_JEXEC') or die;
 
@@ -58,6 +59,12 @@ class plgContentSuperExtraVote extends CMSPlugin
      */
     protected $user;
 
+    /**
+     * @var    Registry
+     * @since    3.8.0
+     */
+    protected $vote;
+
 
 
     public function __construct(&$subject, $config)
@@ -68,6 +75,7 @@ class plgContentSuperExtraVote extends CMSPlugin
         $this->app = Factory::getApplication();
         $this->db = Factory::getDbo();
         $this->user = Factory::getUser();
+        $this->vote = new Registry();
     }
 
     /**
@@ -146,45 +154,19 @@ class plgContentSuperExtraVote extends CMSPlugin
 
         $parts = explode('.', $context);
 
-        $rating_count=$rating_sum=0;
-
         if ($parts[0] !== 'com_content')
         {
             return false;
         }
 
-        if (empty($params) || !$params->get('show_vote', null))
+        if (empty($params) || !$params->get('show_vote', null)  || $context == 'com_content.categories')
         {
             return '';
         }
 
-        $query=$this->db->getQuery(true);
-
-        $query->select(
-            $this->db->quoteName(array('rating_sum', 'rating_count', 'content_id'))
-        )
-            ->from($this->db->quoteName('#__content_rating'))
-            ->where($this->db->quoteName('content_id') .' = '. $this->db->quote($this->article_id));
-
-        $this->db->setQuery($query);
-        $vote=$this->db->loadObject();
-        $vote->user_id = $this->user->id;
-
-        $query->clear();
-
-        if($vote) {
-            $rating_sum = intval($vote->rating_sum);
-            $rating_count = intval($vote->rating_count);
-            $user_voted = false;
-
-            if($vote->user_id){
-                $query->select('COUNT(*)')
-                    ->from($this->db->quoteName('#__content_superextravote'))
-                    ->where(
-                        $this->db->quoteName('user_id') .'='. $vote->user_id .' AND '.
-                        $this->db->quoteName('content_id') .'='. $vote->content_id
-                    );
-            }
+        if(!($this->prepareVoting()))
+        {
+            return '';
         }
 
         // Load plugin language files only when needed (ex: they are not needed if show_vote is not active).
@@ -193,15 +175,63 @@ class plgContentSuperExtraVote extends CMSPlugin
         // Render the layout
         ob_start();
         $html = ob_get_clean();
-
         // Get the path for the voting form layout file
         $path = PluginHelper::getLayoutPath('content', 'superextravote', 'vote');
-
         // Render the layout
         ob_start();
         include $path;
         $html .= ob_get_clean();
-
         return $html;
+    }
+
+    private function prepareVoting(){
+        if(!$this->article_id){
+            return false;
+        }
+        $rating_count=$rating_sum=$rating_mean=0;
+        $user_voted = false;
+
+        $query=$this->db->getQuery(true);
+        $query->select($this->db->quoteName(array('rating_sum', 'rating_count')))
+            ->from($this->db->quoteName('#__content_rating'))
+            ->where($this->db->quoteName('content_id') .' = '. $this->db->quote($this->article_id));
+        $this->db->setQuery($query);
+
+
+        $vote=$this->db->loadObject();
+
+
+        $query->clear();
+
+        if($vote)
+        {
+            $rating_sum = intval($vote->rating_sum);
+            $rating_count = intval($vote->rating_count);
+            if( $rating_count!=0 )
+            {
+                $rating_mean = ceil(($rating_sum / $rating_count) / 0.5) * 0.5;
+            }
+        }
+
+        $this->vote->set('rating_count', $rating_count);
+        $this->vote->set('rating_sum', $rating_sum);
+        $this->vote->set('rating_mean', $rating_mean);
+
+
+        if($this->user->id)
+        {
+            $query->select('COUNT(*)')
+                ->from($this->db->quoteName('#__content_superextravote'))
+                ->where(
+                    $this->db->quoteName('user_id') .'='. $this->user->id .' AND '.
+                    $this->db->quoteName('content_id') .'='. $this->article_id
+                );
+            $this->db->setQuery($query);
+            $user_voted=$this->db->getNumRows() ? true : false;
+        }
+
+        $this->vote->set('user_voted', $user_voted);
+
+        return true;
     }
 }
