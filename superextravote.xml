@@ -35,6 +35,7 @@
 	<!-- Plugin files -->
 	<files>
 		<filename plugin="superextravote">superextravote.php</filename>
+		<folder>assets</folder>
 		<folder>language</folder>
 		<folder>sql</folder>
 	</files>

@@ -1,0 +1,69 @@
+.superextravote{
+    display: inline-block;
+    position: relative;
+}
+.superextravote form{
+    padding: 5px;
+}
+.superextravote .star{
+    display: inline-block;
+    width: 26px;
+    height: 24px;
+    background: url(./icostar.png) no-repeat top;
+    background-size: cover;
+    cursor: pointer;
+}
+.superextravote .stars{
+    display: block;
+    position: relative;
+}
+.superextravote .stars:before,
+.superextravote .stars:after{
+    content: "";
+    display: table;
+    clear: both;
+}
+.superextravote input[type="radio"]{
+    display: none;
+}
+.superextravote label{
+    overflow: hidden;
+    *zoom: 1;
+    position: relative;
+    float: right;
+    padding-right: 10px;
+    z-index: 1;
+}
+
+.superextravote label .star.chose-half{
+    background-position: bottom;
+}
+.superextravote label .star.chose-full{
+    background-position: center;
+}
+.superextravote form:not(.locked) .stars:hover .star,
+.superextravote .choosable .stars:hover .star{
+    background-position: top;
+}
+.superextravote form:not(.locked) .stars:not(:hover) input:checked ~ label .star,
+.superextravote .choosable .stars:not(:hover) input:checked ~ label .star,
+.superextravote form:not(.locked) .stars label:hover .star,
+.superextravote .choosable .stars label:hover .star,
+.superextravote form:not(.locked) .stars label:hover ~ label .star,
+.superextravote .choosable .stars label:hover ~ label .star {
+    background-position: center;
+}
+.superextravote form .info-msg{
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: #fff;
+    z-index: 10;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+}
+

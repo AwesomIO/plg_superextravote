@@ -58,7 +58,11 @@ class plgContentSuperExtraVote extends CMSPlugin
      */
     protected $user;
 
-
+    /**
+     * @var    \Joomla\CMS\Document\HtmlDocument
+     * @since    3.8.0
+     */
+    protected $doc;
 
     public function __construct(&$subject, $config)
     {
@@ -68,6 +72,7 @@ class plgContentSuperExtraVote extends CMSPlugin
         $this->app = Factory::getApplication();
         $this->db = Factory::getDbo();
         $this->user = Factory::getUser();
+        $this->doc = Factory::getDocument();
     }
 
     /**
@@ -145,10 +150,7 @@ class plgContentSuperExtraVote extends CMSPlugin
         $this->article_id = intval($row->id);
 
         $parts = explode('.', $context);
-
-        $rating_count=$rating_sum=0;
-
-        if ($parts[0] !== 'com_content')
+        if ($parts[0] !== 'com_content' || ($parts[0] == 'com_content' && $parts[1] == 'categories'))
         {
             return false;
         }
@@ -158,8 +160,28 @@ class plgContentSuperExtraVote extends CMSPlugin
             return '';
         }
 
-        $query=$this->db->getQuery(true);
+        $vote = $this->prepareVotingData();
 
+        $path = PluginHelper::getLayoutPath('content', 'superextravote', 'vote');
+
+        // Render the layout
+        $this->doc->addStyleSheet(JURI::root(true).'/plugins/content/superextravote/assets/superextravote-style.css');
+        $this->doc->addScript(JURI::root(true).'/plugins/content/superextravote/assets/superextravote-script.js');
+
+        $this->doc->addScriptDeclaration("
+				var ev_basefolder = '".JURI::base(true)."';
+			");
+
+        ob_start();
+        include $path;
+        $html = ob_get_clean();
+
+        return $html;
+    }
+
+    private function prepareVotingData(){
+
+        $query=$this->db->getQuery(true);
         $query->select(
             $this->db->quoteName(array('rating_sum', 'rating_count', 'content_id'))
         )
@@ -168,40 +190,41 @@ class plgContentSuperExtraVote extends CMSPlugin
 
         $this->db->setQuery($query);
         $vote=$this->db->loadObject();
-        $vote->user_id = $this->user->id;
-
         $query->clear();
 
-        if($vote) {
-            $rating_sum = intval($vote->rating_sum);
-            $rating_count = intval($vote->rating_count);
-            $user_voted = false;
-
-            if($vote->user_id){
-                $query->select('COUNT(*)')
-                    ->from($this->db->quoteName('#__content_superextravote'))
-                    ->where(
-                        $this->db->quoteName('user_id') .'='. $vote->user_id .' AND '.
-                        $this->db->quoteName('content_id') .'='. $vote->content_id
-                    );
-            }
+        if(!$vote){
+            $vote = (object) array(
+                'rating_sum' => 0,
+                'rating_count' => 0,
+                'content_id' => $this->article_id
+            );
         }
 
-        // Load plugin language files only when needed (ex: they are not needed if show_vote is not active).
-        $this->loadLanguage();
+        $vote->rating_sum = intval($vote->rating_sum);
+        $vote->rating_count = intval($vote->rating_count);
+        $vote->access = false;
 
-        // Render the layout
-        ob_start();
-        $html = ob_get_clean();
+        if($this->user->id){
+            $query->select('COUNT(*)')
+                ->from($this->db->quoteName('#__content_superextravote'))
+                ->where(
+                    $this->db->quoteName('user_id') .'='. $this->user->id .' AND '.
+                    $this->db->quoteName('content_id') .'='. $this->article_id
+                );
+            $this->db->setQuery($query);
+            $count = $this->db->loadResult();
+            $query->clear();
+            $vote->access = $count ? false : true;
+        }
 
-        // Get the path for the voting form layout file
-        $path = PluginHelper::getLayoutPath('content', 'superextravote', 'vote');
+        if(!$vote->rating_count){
+            $vote->rating = 0;
+        }
+        else{
+            $vote->rating = ceil(($vote->rating_sum / $vote->rating_count)/0.5)*0.5;
+        }
 
-        // Render the layout
-        ob_start();
-        include $path;
-        $html .= ob_get_clean();
 
-        return $html;
+        return $vote;
     }
 }
