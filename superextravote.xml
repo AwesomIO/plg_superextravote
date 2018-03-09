@@ -38,6 +38,7 @@
 		<folder>assets</folder>
 		<folder>language</folder>
 		<folder>sql</folder>
+		<folder>tmpl</folder>
 	</files>
 
 	<!-- Config parameter -->
