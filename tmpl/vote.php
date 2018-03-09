@@ -27,7 +27,7 @@ $uri->setVar('hitcount', '0');
     }?>
     <form method="post"
           id="<?php echo 'superextravote_' . $this->article_id; ?>"
-          action="<?php echo htmlspecialchars($uri->toString(), ENT_COMPAT, 'UTF-8'); ?>"
+          action="/<?php /*echo htmlspecialchars($uri->toString(), ENT_COMPAT, 'UTF-8');*/ ?>"
           class="form-inline<?php echo $class;?>">
         <div class="stars">
         <?php for($s=5; $s >= 1; $s--){ ?>
@@ -57,9 +57,9 @@ $uri->setVar('hitcount', '0');
         <div class="rating">
             <span>средняя оценка: <b><?php echo $vote->rating;?></b></span>
         </div>
-        <noscript>
-            <input type="submit" name="submit_vote" value="ОЦЕНИТЬ" />
-        </noscript>
+        <div class="count">
+            <span>вего оценок: <b><?php echo $vote->rating_count;?></b></span>
+        </div>
         <?php echo JHtml::_('form.token'); ?>
     </form>
 </div>

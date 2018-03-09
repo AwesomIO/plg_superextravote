@@ -95,6 +95,7 @@ function SuperExtraVoteSuccess(id, voteData) {
         }
     }
     voteForm.querySelector('.rating>span>b').innerHTML = voteData.rating;
+    voteForm.querySelector('.count>span>b').innerHTML = voteData.rating_count;
     var divInfo = document.createElement('div');
     divInfo.className = "info-msg";
     divInfo.innerHTML = "Спасибо! Ваш голос принят.";
