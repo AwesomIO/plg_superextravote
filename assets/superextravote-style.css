@@ -5,10 +5,11 @@
 .superextravote form{
     padding: 5px;
 }
+
 .superextravote .star{
     display: inline-block;
-    width: 26px;
-    height: 24px;
+    width: 19px;
+    height: 18px;
     background: url(./icostar.png) no-repeat top;
     background-size: cover;
     cursor: pointer;
