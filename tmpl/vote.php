@@ -58,7 +58,7 @@ $uri->setVar('hitcount', '0');
             <span>средняя оценка: <b><?php echo $vote->rating;?></b></span>
         </div>
         <div class="count">
-            <span>вего оценок: <b><?php echo $vote->rating_count;?></b></span>
+            <span>всего оценок: <b><?php echo $vote->rating_count;?></b></span>
         </div>
         <?php echo JHtml::_('form.token'); ?>
     </form>
